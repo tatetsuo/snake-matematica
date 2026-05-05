@@ -219,7 +219,7 @@ function update() {
     let ateBlock = false;
     for (let i = 0; i < blocksOnMap.length; i++) {
         if (head.x === blocksOnMap[i].x && head.y === blocksOnMap[i].y) {
-            processCollectedBlock(blocksOnMap[i].symbol);
+            processCollectedBlock(blocksOnMap[i].color);
             blocksOnMap.splice(i, 1);
             ateBlock = true;
             break;
