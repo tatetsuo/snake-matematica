@@ -31,8 +31,7 @@ let isPlaying = false;
 
 // Variáveis do Modo Infinito (Easter Egg)
 let isInfiniteMode = false;
-const konamiCode = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight'];
-let konamiIndex = 0;
+let tapCount = 0;
 
 // Estado Matemático
 let currentMode = "SIMPLES";
@@ -148,28 +147,25 @@ function spawnBlocks() {
     }
 }
 
-function processCollectedBlock(symbol) {
-    if (currentMode === "SIMPLES" && inventory.includes(symbol)) {
-        endGame("Erro Matemático: Em uma Combinação Simples, os elementos não podem se repetir!");
+function processCollectedBlock(colorCollected) { // Agora recebe a cor
+    // Verifica pela cor em vez da letra
+    if (currentMode === "SIMPLES" && inventory.includes(colorCollected)) {
+        endGame("Erro Matemático: Em uma Combinação Simples, as CORES não podem se repetir!");
         return;
     }
 
-    inventory.push(symbol);
+    inventory.push(colorCollected);
     updateHUD();
 
     if (inventory.length === combinationSize) {
         interactionsCompleted++;
         
-        // Se NÃO for modo infinito e bater a meta, vence.
         if (!isInfiniteMode && interactionsCompleted >= interactionsNeeded) {
             endGame("", true); 
         } else {
-            // Se for Modo Infinito OU ainda não bateu a meta normal:
             playSound('success'); 
             canvas.style.borderColor = "#fbbf24";
             setTimeout(() => canvas.style.borderColor = "#10b981", 300);
-            
-            // setupNewMission já zera o inventário e troca a regra matemática
             setupNewMission(); 
         }
     } else {
@@ -179,7 +175,6 @@ function processCollectedBlock(symbol) {
 }
 
 function updateHUD() {
-    // Muda o texto do placar dependendo do modo
     if (isInfiniteMode) {
         scoreText.innerText = `Pacotes: ${interactionsCompleted} (Infinito)`;
     } else {
@@ -188,9 +183,17 @@ function updateHUD() {
     
     let invDisplay = "";
     for (let i = 0; i < combinationSize; i++) {
-        invDisplay += inventory[i] ? `[${inventory[i]}] ` : "[ ] ";
+        if (inventory[i]) {
+            // Desenha o bloco com a cor real que o jogador comeu
+            invDisplay += `<span style="color: ${inventory[i]}; text-shadow: 1px 1px 2px #000; font-size: 16px;">[■]</span> `;
+        } else {
+            // Espaço vazio
+            invDisplay += `<span style="color: #ffffff;">[ ]</span> `;
+        }
     }
-    inventoryBox.innerText = invDisplay;
+    
+    // IMPORTANTE: Mudamos de innerText para innerHTML para as cores funcionarem!
+    inventoryBox.innerHTML = invDisplay; 
 }
 
 // --- LOOP DO JOGO ---
@@ -246,30 +249,25 @@ function draw() {
 }
 
 // --- CONTROLES E BOTÕES ---
-// Detector do Konami Code
-window.addEventListener('keydown', (e) => {
-    // Só escuta o código se estiver na tela inicial (sem jogar)
-    if (!isPlaying && !document.getElementById('startScreen').classList.contains('hidden')) {
-        if (e.key === konamiCode[konamiIndex]) {
-            konamiIndex++;
-            if (konamiIndex === konamiCode.length) {
-                ativarModoInfinito();
-                konamiIndex = 0; // Reseta após ativar
-            }
-        } else {
-            konamiIndex = 0; // Errou a sequência, zera o progresso
-        }
+
+const tituloPrincipal = document.querySelector('#startScreen h1');
+tituloPrincipal.addEventListener('click', () => {
+    if (isInfiniteMode) return; // Se já ativou, não faz nada
+    
+    tapCount++;
+    if (tapCount >= 5) {
+        ativarModoInfinito();
+        tapCount = 0; // Reseta o contador
     }
 });
 
 function ativarModoInfinito() {
     isInfiniteMode = true;
-    playSound('success'); // Toca o sonzinho de sucesso
+    playSound('success'); 
     
-    // Muda o visual da tela inicial para mostrar que desbloqueou
     const titulo = document.querySelector('#startScreen h2');
     titulo.innerText = "Operação: INFINITA (Desbloqueada!)";
-    titulo.style.color = "#a855f7"; // Fica roxo neon
+    titulo.style.color = "#a855f7"; 
     
     const texto = document.querySelector('#startScreen p');
     texto.innerHTML = "<strong>Modo Infinito:</strong> O limite de 5 pacotes foi desativado. Sobreviva até preencher todo o sistema e continue resolvendo as combinações. Boa sorte!";
