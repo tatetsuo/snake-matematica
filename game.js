@@ -29,6 +29,11 @@ const interactionsNeeded = 5;
 let gameLoop;
 let isPlaying = false;
 
+// Variáveis do Modo Infinito (Easter Egg)
+let isInfiniteMode = false;
+const konamiCode = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight'];
+let konamiIndex = 0;
+
 // Estado Matemático
 let currentMode = "SIMPLES";
 const combinationSize = 3;
@@ -155,22 +160,32 @@ function processCollectedBlock(symbol) {
     if (inventory.length === combinationSize) {
         interactionsCompleted++;
         
-        if (interactionsCompleted >= interactionsNeeded) {
+        // Se NÃO for modo infinito e bater a meta, vence.
+        if (!isInfiniteMode && interactionsCompleted >= interactionsNeeded) {
             endGame("", true); 
         } else {
-            playSound('success'); // <--- SOM DE SUCESSO AQUI
+            // Se for Modo Infinito OU ainda não bateu a meta normal:
+            playSound('success'); 
             canvas.style.borderColor = "#fbbf24";
             setTimeout(() => canvas.style.borderColor = "#10b981", 300);
-            setupNewMission();
+            
+            // setupNewMission já zera o inventário e troca a regra matemática
+            setupNewMission(); 
         }
     } else {
-        playSound('eat'); // <--- SOM DE COMER BLOCO AQUI
+        playSound('eat'); 
         spawnBlocks(); 
     }
 }
 
 function updateHUD() {
-    scoreText.innerText = `${interactionsCompleted}/${interactionsNeeded}`;
+    // Muda o texto do placar dependendo do modo
+    if (isInfiniteMode) {
+        scoreText.innerText = `Pacotes: ${interactionsCompleted} (Infinito)`;
+    } else {
+        scoreText.innerText = `${interactionsCompleted}/${interactionsNeeded}`;
+    }
+    
     let invDisplay = "";
     for (let i = 0; i < combinationSize; i++) {
         invDisplay += inventory[i] ? `[${inventory[i]}] ` : "[ ] ";
@@ -231,6 +246,35 @@ function draw() {
 }
 
 // --- CONTROLES E BOTÕES ---
+// Detector do Konami Code
+window.addEventListener('keydown', (e) => {
+    // Só escuta o código se estiver na tela inicial (sem jogar)
+    if (!isPlaying && !document.getElementById('startScreen').classList.contains('hidden')) {
+        if (e.key === konamiCode[konamiIndex]) {
+            konamiIndex++;
+            if (konamiIndex === konamiCode.length) {
+                ativarModoInfinito();
+                konamiIndex = 0; // Reseta após ativar
+            }
+        } else {
+            konamiIndex = 0; // Errou a sequência, zera o progresso
+        }
+    }
+});
+
+function ativarModoInfinito() {
+    isInfiniteMode = true;
+    playSound('success'); // Toca o sonzinho de sucesso
+    
+    // Muda o visual da tela inicial para mostrar que desbloqueou
+    const titulo = document.querySelector('#startScreen h2');
+    titulo.innerText = "Operação: INFINITA (Desbloqueada!)";
+    titulo.style.color = "#a855f7"; // Fica roxo neon
+    
+    const texto = document.querySelector('#startScreen p');
+    texto.innerHTML = "<strong>Modo Infinito:</strong> O limite de 5 pacotes foi desativado. Sobreviva até preencher todo o sistema e continue resolvendo as combinações. Boa sorte!";
+}
+
 window.addEventListener('keydown', e => {
     switch (e.key) {
         case 'ArrowUp': if (velocity.y === 0) velocity = { x: 0, y: -1 }; break;
@@ -238,6 +282,7 @@ window.addEventListener('keydown', e => {
         case 'ArrowLeft': if (velocity.x === 0) velocity = { x: -1, y: 0 }; break;
         case 'ArrowRight': if (velocity.x === 0) velocity = { x: 1, y: 0 }; break;
     }
+    
 });
 
 let touchStartX = 0;
