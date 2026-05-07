@@ -27,12 +27,13 @@
         #gameContainer {
             position: relative;
             width: 320px;
-            height: 480px;
             background-color: #1e293b;
             border: 3px solid var(--accent);
             border-radius: 8px;
             box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
         canvas {
             display: block;
@@ -71,13 +72,10 @@
         
         /* UI do Jogo (HUD) */
         #hud {
-            position: absolute;
-            top: 0;
-            left: 0;
             width: 100%;
             padding: 10px;
             box-sizing: border-box;
-            background: rgba(0,0,0,0.7);
+            background: #0f172a;
             border-bottom: 2px solid var(--accent);
             pointer-events: none;
             z-index: 5;
